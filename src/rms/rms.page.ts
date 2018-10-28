@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
-import { NavParams, PopoverController } from 'ionic-angular';
+import { NavParams, PopoverController, ViewController } from 'ionic-angular';
 
 import { TranslateService } from '@ngx-translate/core';
 
@@ -52,6 +52,7 @@ const FIELDS = [{
 @Component({
   providers: [CONTROL_UNIT_PROVIDER],
   templateUrl: 'rms.page.html',
+  host: {'(window:keydown)': 'onKeyDown($event)'}
 })
 export class RmsPage implements OnDestroy, OnInit {
 
@@ -75,8 +76,9 @@ export class RmsPage implements OnDestroy, OnInit {
 
   private subscription: Subscription;
 
-  constructor(public cu: ControlUnit, private logger: Logger, private settings: Settings, private speech: Speech,
-    params: NavParams, private popover: PopoverController, private translate: TranslateService)
+  constructor(public cu: ControlUnit, private logger: Logger, private settings: Settings,
+    private speech: Speech, params: NavParams, private popover: PopoverController,
+    private translate: TranslateService, private view: ViewController)
   {
     this.options = params.data;
 
@@ -279,6 +281,23 @@ export class RmsPage implements OnDestroy, OnInit {
       stop:  () => this.session.stop(),
     });
     menu.present({ev: event});
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (this.view.isLast()) {
+      switch (event.code) {
+        case 'Enter':
+        case 'Space':
+          this.cu.trigger(ControlUnitButton.START);
+          event.stopPropagation();
+          break;
+        // Note that on Android, Escape closes the application by default
+        case 'Escape':
+          this.cu.trigger(ControlUnitButton.PACE_CAR);
+          event.stopPropagation();
+          break;
+      }
+    }
   }
 
   // see https://github.com/ngx-translate/core/issues/330
